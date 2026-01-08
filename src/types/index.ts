@@ -99,15 +99,13 @@ export interface ApiProductsResponse {
   dados: ApiProductRaw[];
 }
 
-// Mapeamento de IDUnidade para tipo de unidade
-// 2 = KG (pesável), outros = UN (unidade)
 export const mapApiProductToProduct = (apiProduct: ApiProductRaw): Product => {
   const isKg = apiProduct.UN.toUpperCase() === 'KG';
   
   return {
     id: String(apiProduct.ID),
     name: apiProduct.Nome,
-    image: '', // Será preenchido depois (pode usar filtro img na API ou placeholder)
+    image: '', 
     pricePerUnit: apiProduct.PrecoVenda ?? 0,
     unit: isKg ? 'kg' : 'un',
     requiresScale: isKg,
@@ -118,7 +116,6 @@ export const mapApiProductToProduct = (apiProduct: ApiProductRaw): Product => {
   };
 };
 
-// === TIPOS DA API DE PEDIDOS ===
 
 export interface ApiOrderItemPayload {
   Seq: number;
@@ -159,7 +156,7 @@ export interface ApiOrderPayload {
   Cancelado: boolean;
   ProntaEntrega: boolean;
   OBS: string;
-  IDCliente: number;
+  IDTerceiro: number;
   Itens: ApiOrderItemPayload[];
   Faturas: ApiOrderFaturaPayload[];
 }
@@ -175,7 +172,6 @@ export interface ApiOrderResponse {
   };
 }
 
-// Helper para formatar data no formato esperado pela API
 export const formatDateForApi = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -193,7 +189,6 @@ export const formatDateOnlyForApi = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// Mapeia o pedido do frontend para o formato da API
 export const mapOrderToApiPayload = (order: Order): ApiOrderPayload => {
   const now = new Date();
   const dateStr = formatDateOnlyForApi(now);
@@ -238,7 +233,7 @@ export const mapOrderToApiPayload = (order: Order): ApiOrderPayload => {
     Cancelado: false,
     ProntaEntrega: false,
     OBS: `Pedido auto-atendimento - Cliente: ${order.customerName}`,
-    IDCliente: 1,
+    IDTerceiro: 1,
     Itens: itens,
     Faturas: faturas,
   };
