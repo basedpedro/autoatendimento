@@ -3,6 +3,7 @@ import { useAppStore } from './store/useAppStore';
 import { IdleScreen } from './screens/IdleScreen';
 import { IdentificationScreen } from './screens/IdentificationScreen';
 import { ProductsScreen } from './screens/ProductsScreen';
+import { SummaryScreen } from './screens/SummaryScreen';
 import WeighingModal from './screens/WeighingModal';
 import { useEffect } from 'react';
 
@@ -55,7 +56,7 @@ function App() {
           </>
         );
       case 'summary':
-        return <ProductsScreen />;
+        return <SummaryScreen />;
       default:
         return <IdleScreen />;
     }
