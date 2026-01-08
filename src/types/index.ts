@@ -13,6 +13,10 @@ export interface Product {
   pricePerUnit: number;
   unit: ProductUnit;
   requiresScale: boolean;
+  barcode?: string;
+  groupId?: number | null;
+  groupName?: string | null;
+  stockAvailable?: number;
 }
 
 export interface OrderItem {
@@ -66,3 +70,50 @@ export interface AppActions {
 }
 
 export type AppStore = AppState & AppActions;
+
+// === TIPOS DA API DO BACKEND ===
+
+export interface ApiProductRaw {
+  ID: number;
+  CodigoBarras: string;
+  Nome: string;
+  IDGrupo: number | null;
+  Grupo: string | null;
+  IDUnidade: number;
+  UN: string;
+  EstoqueDisponivel: number;
+  PrecoVenda: number | null;
+  Obs: string | null;
+}
+
+export interface ApiProductsResponse {
+  ret: {
+    codigo: string;
+    mensagem: string;
+  };
+  query: {
+    filtros: {
+      disponives: string[];
+    };
+  };
+  dados: ApiProductRaw[];
+}
+
+// Mapeamento de IDUnidade para tipo de unidade
+// 2 = KG (pesável), outros = UN (unidade)
+export const mapApiProductToProduct = (apiProduct: ApiProductRaw): Product => {
+  const isKg = apiProduct.UN.toUpperCase() === 'KG';
+  
+  return {
+    id: String(apiProduct.ID),
+    name: apiProduct.Nome,
+    image: '', // Será preenchido depois (pode usar filtro img na API ou placeholder)
+    pricePerUnit: apiProduct.PrecoVenda ?? 0,
+    unit: isKg ? 'kg' : 'un',
+    requiresScale: isKg,
+    barcode: apiProduct.CodigoBarras,
+    groupId: apiProduct.IDGrupo,
+    groupName: apiProduct.Grupo,
+    stockAvailable: apiProduct.EstoqueDisponivel,
+  };
+};

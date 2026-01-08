@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { productsService } from '../services/productsService';
 import { mockProducts } from '../data/products';
+import type { Product } from '../types';
 import styles from './ProductsScreen.module.css';
 
 const normalizeText = (text: string): string => {
@@ -80,19 +82,49 @@ export const ProductsScreen: React.FC = () => {
 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const cartEndRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Carrega produtos da API ao montar o componente
+  useEffect(() => {
+    const loadProducts = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const apiProducts = await productsService.getProducts();
+        if (apiProducts.length > 0) {
+          setProducts(apiProducts);
+        } else {
+          // Fallback para mock se API retornar vazio
+          setProducts(mockProducts);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar produtos da API:', err);
+        setError('Não foi possível carregar os produtos do servidor. Usando dados locais.');
+        // Fallback para mock em caso de erro
+        setProducts(mockProducts);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) {
-      return mockProducts;
+      return products;
     }
     const normalizedQuery = normalizeText(searchQuery);
-    return mockProducts.filter(product => {
+    return products.filter(product => {
       const normalizedName = normalizeText(product.name);
       return normalizedName.includes(normalizedQuery);
     });
-  }, [searchQuery]);
+  }, [searchQuery, products]);
 
   useEffect(() => {
     if (cartEndRef.current) {
@@ -229,6 +261,13 @@ export const ProductsScreen: React.FC = () => {
           </div>
         </header>
 
+        {/* Estado de erro */}
+        {error && (
+          <div className={styles.errorBanner}>
+            <span>⚠️ {error}</span>
+          </div>
+        )}
+
         <div className={styles.searchContainer}>
           <div className={styles.searchInputWrapper}>
             <SearchIcon />
@@ -259,7 +298,12 @@ export const ProductsScreen: React.FC = () => {
         </div>
 
         <div className={styles.grid}>
-          {filteredProducts.length === 0 ? (
+          {isLoading ? (
+            <div className={styles.loadingState}>
+              <div className={styles.spinner} />
+              <p>Carregando produtos...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className={styles.noResults}>
               <p>Nenhum produto encontrado para "{searchQuery}"</p>
               <button 
